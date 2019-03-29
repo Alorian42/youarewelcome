@@ -13,6 +13,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://unpkg.com/vue-cookies@1.5.12/vue-cookies.js"></script>
     <script>
         Vue.component('skynet-chat', {
             props: {
@@ -40,10 +41,7 @@
                         text: message,
                         received: false,
                         time: (h < 10 ? '0' + h : h)  + ':' +  (m < 10 ? '0' + m : m),
-                        id: this.id
                     });
-                    this.id++;
-                    this.scrollToEnd();
 
                     fetch('/api/get-answer', {
                         method: 'POST',
@@ -65,10 +63,7 @@
                                 text: json.a,
                                 received: true,
                                 time: (h < 10 ? '0' + h : h)  + ':' +  (m < 10 ? '0' + m : m),
-                                id: this.id
                             });
-                            this.id++;
-                            this.scrollToEnd();
                         }
                         else {
                             throw new Error('Request is not ok');
@@ -95,6 +90,10 @@
             watch: {
                 messages() {
                     this.$emit('input', this.messages);
+                },
+                value() {
+                    this.messages = this.value;
+                    this.scrollToEnd();
                 }
             }
         });
@@ -108,11 +107,15 @@
             template: `
                 <div class="skynet-chat-history">
                     <div 
-                        v-for="message in history"
-                        v-bind:key="message.id"
+                        v-for="(message, index) in history"
+                        v-bind:key="index"
                         class="skynet-chat-history-item"
                         v-bind:class="{ 'skynet-chat-history-item-received': message.received, 'skynet-chat-history-item-sent': !message.received }">
-                        {{ (message.received ? 'Skynet' : 'You') + ' (' + message.time + ') ' +message.text }}
+                        <div class="skynet-chat-history-item-top">
+                            <b>{{ message.received ? 'Skynet' : 'You' }}</b>
+                            <div class="skynet-chat-history-item-date"><u>{{ message.time }}<u></div>
+                        </div>
+                        <div class="skynet-chat-history-item-text">{{ message.text }}</div>
                     </div>
                 </div>
             `
@@ -141,6 +144,20 @@
             data: {
                 messages: []
             },
+            mounted: function() {
+                const messages = this.$cookies.get('messages');
+                if (messages !== null) {
+                    const arrayMessages = JSON.parse(messages);
+                    if (Array.isArray(arrayMessages)) {
+                        this.messages = arrayMessages;
+                    }
+                }
+            },
+            watch: {
+                messages() {
+                    this.$cookies.set('messages', JSON.stringify(this.messages));
+                }
+            }
         });
     </script>
 </body>
