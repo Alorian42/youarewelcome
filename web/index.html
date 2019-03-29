@@ -13,7 +13,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-    <script src="https://unpkg.com/vue-cookies@1.5.12/vue-cookies.js"></script>
     <script>
         Vue.component('skynet-chat', {
             props: {
@@ -147,7 +146,7 @@
                 messages: []
             },
             mounted: function() {
-                const messages = this.$cookies.get('messages');
+                const messages = window.localStorage.getItem('messages');
                 if (messages !== null) {
                     const arrayMessages = JSON.parse(messages);
                     if (Array.isArray(arrayMessages)) {
@@ -157,7 +156,7 @@
             },
             watch: {
                 messages() {
-                    this.$cookies.set('messages', JSON.stringify(this.messages));
+                    window.localStorage.setItem('messages', JSON.stringify(this.messages));
                 }
             }
         });
