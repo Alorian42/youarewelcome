@@ -1,70 +1,147 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Огонь!</title>
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <!-- это можно выкинуть и заменить своими стилями -->
-  <link rel="stylesheet" type="text/css" href="/styles.css">
-  <!-- например, можно заюзать Bootstrap: -->
-  <!--<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css">-->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Skynet Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css">
 </head>
 <body>
-  <p>Оно работает!<br /> Полдела сделано :)</p>
-  <p><strong>Дано:</strong> сервер, который умеет API из одного вызова.<br/>
-    На входе одна фраза (вопрос), на выходе другая (ответ).<br/> Действующий макет:</p>
-  <form
-    class="form-inline"
-    onsubmit="$.post('/api/get-answer', {q: this.q.value}).done(function(resp) {
-      if (resp.ok) {
-        alert(resp.a)
-      } else {
-        console.log('ERR:', resp.error);
-      }
-    }); return false">
-    <input name="q" type="text" placeholder="Введите вопрос" autofocus>
-    <button type="submit">Узнать ответ</button>
-    <div>
-      <small>На одинаковые вопросы будут одинаковые ответы</small>
+    <div id="app">
+        <skynet-chat v-model="messages"></skynet-chat>
     </div>
-  </form>
-  <p><strong>Что надо:</strong> сделать из этого &uarr; убожества <em>няшный прототип</em> чатика на
-    двоих (вопрос-ответ, вопрос-ответ).</p>
-  <ul>
-    <li>
-      «няшный» означает, что вам самим должно понравиться то, что получилось: маленькое, 
-      симпатичное, так и хочется кому-то ещё показать;
-    </li>
-    <li>
-      «прототип» означает, что вы не потратите на это слишком много времени.
-      Сами решайте, что надо сделать обязательно, а что можно и выкинуть.
-    </li>
-  </ul>
-  <p>Важно: получившаяся страница должна выглядеть пусть и минималистично, но цельно 
-    и самодостаточно. Примеры цельности, самодостаточности и минимализма: 
-    <a href="https://ya.ru/">ya.ru</a>, <a href="https://telegra.ph/">telegra.ph</a></p>
-  <p><small>Примечание: сервер уже есть, его трогать не надо. В частности, 
-    не надо его переписывать на Node.js. Его надо просто использовать. 
-    А вот фронтенд можно и нужно переработать.</small></p>
-  <p>В качестве образца того, как выглядит и как работает чатик, можно взять
-    любой мессенджер, любую соцсеть, любой продающий чат-консультант
-    (вы на нашем сайте уже 3 секунды. Чем могу помочь?). Короче, собственный опыт и здравый смысл.</p>
-  <p>Решение должно использовать:</p>
-  <ul>
-    <li>Vue.js</li>
-    <li>Bootstrap либо свою вёрстку</li>
-    <li>SASS, LESS, PostCSS и т.п. можно</li>
-    <li>ES6, ES7 можно</li>
-    <li>jQuery, если по какой-то причине потребуется, можно</li>
-  </ul>
-  
-  <p>Нельзя использовать CoffeeScript.<br />
-    Про остальное лучше посоветоваться.</p>
- 
-  <p>...и чем меньше кода будет, тем лучше:</p>
-  <p><img src="errors.jpg"></p>
 
-  <!-- jQuery совершенно не обязателен. Вообще, весь этот файл дан просто для примера -->
-  <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script>
+        Vue.component('skynet-chat', {
+            props: {
+                value: {
+                    type: Array,
+                    required: true
+                }
+            },
+            data() {
+                return {
+                    messages: [],
+                    id: 0
+                }
+            },
+            mounted: function() {
+                this.message = [...this.value];
+            },
+            methods: {
+                sendMessage: function(message) {
+                    const date = new Date;
+                    const h = date.getHours();
+                    const m = date.getMinutes()
+
+                    this.messages.push({
+                        text: message,
+                        received: false,
+                        time: (h < 10 ? '0' + h : h)  + ':' +  (m < 10 ? '0' + m : m),
+                        id: this.id
+                    });
+                    this.id++;
+                    this.scrollToEnd();
+
+                    fetch('/api/get-answer', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+                        },
+                        body: 'q='+encodeURIComponent(message)
+                    }).then(resp => {
+                        return resp.json();
+                    })
+                    .then(json => {
+                        if (json.ok) {
+                            const date = new Date;
+                            const h = date.getHours();
+                            const m = date.getMinutes()
+
+                            this.messages.push({
+                                text: json.a,
+                                received: true,
+                                time: (h < 10 ? '0' + h : h)  + ':' +  (m < 10 ? '0' + m : m),
+                                id: this.id
+                            });
+                            this.id++;
+                            this.scrollToEnd();
+                        }
+                        else {
+                            throw new Error('Request is not ok');
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error)
+                    });
+                },
+                scrollToEnd: function() {
+                    this.$nextTick().then(() => {
+                        this.$refs.chatWindow.$el.scrollTo(0, this.$refs.chatWindow.$el.scrollHeight);
+                    });
+                }
+            },
+            template: `
+                <div class="skynet-wrapper">
+                    <div class="skynet-content">
+                        <skynet-chat-history :history="messages" ref="chatWindow"></skynet-chat-history>
+                        <skynet-chat-input @send="sendMessage"></skynet-chat-input>
+                    </div>
+                </div>
+            `,
+            watch: {
+                messages() {
+                    this.$emit('input', this.messages);
+                }
+            }
+        });
+        Vue.component('skynet-chat-history', {
+            props: {
+                history: {
+                    type: Array,
+                    default: []
+                }
+            },
+            template: `
+                <div class="skynet-chat-history">
+                    <div 
+                        v-for="message in history"
+                        v-bind:key="message.id"
+                        class="skynet-chat-history-item"
+                        v-bind:class="{ 'skynet-chat-history-item-received': message.received, 'skynet-chat-history-item-sent': !message.received }">
+                        {{ (message.received ? 'Skynet' : 'You') + ' (' + message.time + ') ' +message.text }}
+                    </div>
+                </div>
+            `
+        });
+        Vue.component('skynet-chat-input', {
+            data() {
+                return {
+                    text: ''
+                }
+           },
+           methods: {
+                send: function() {
+                    this.$emit('send', this.text);
+                    this.text = '';
+                }
+           },
+           template: `
+                <div class="skynet-chat-input">
+                    <textarea class="skynet-chat-input-item" v-model="text" @keyup.enter="send"></textarea>
+                    <button class="skynet-chat-input-button" @click="send">Send</button>
+                </div>
+            `
+        });
+        const vm = new Vue({
+            el: '#app',
+            data: {
+                messages: []
+            },
+        });
+    </script>
 </body>
 </html>

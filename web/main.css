@@ -1,0 +1,57 @@
+html {
+    background-color: #000;
+}
+
+.skynet-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 15px;
+}
+
+.skynet-chat-input {
+    display: inline-flex;
+    align-items: center;
+}
+
+.skynet-chat-input-item {
+    border: 2px solid black;
+    padding: 5px;
+    width: 350px;
+    font-size: 10px;
+    height: 30px;
+
+    resize: none;
+}
+
+.skynet-chat-input-button {
+    background: #fff;
+    border: 2px solid black;
+    padding: 5px;
+    margin-left: -2px;
+    cursor: pointer;
+
+    height: 44px;
+}
+
+.skynet-chat-history {
+    padding: 15px;
+    height: 350px;
+    width: 377px;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.skynet-chat-history-item {
+    padding: 10px 5px;
+}
+
+.skynet-chat-history-item-received {
+    background-color: #cfded9;
+}
